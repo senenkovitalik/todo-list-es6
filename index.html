@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="favicon.ico" sizes="any" type="image/svg+xml">
+    <title>Todo List</title>
+    <link href="lib/bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="lib/jquery-3.2.1.min.js"></script>
+    <script src="lib/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="css/no_responsive_navbar.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+    <!--Importing all constants & utils-->
+    <script src="js/constants/localStorageConstants.js"></script>
+
+    <!--Importing all models-->
+    <script src="js/models/Task.js"></script>
+    <script src="js/models/TaskStatusEnum.js"></script>
+
+    <script src="js/services/TaskLibrary.js"></script>
+
+    <!--Importing all DAOs-->
+    <script src="js/dao/TaskLocalStorage.js"></script>
+
+    <!--Importing all services-->
+    <script src="js/services/LocationService.js"></script>
+    <script src="js/services/TaskService.js"></script>
+
+    <!--Importing all controllers-->
+    <script src="js/controllers/TodoListController.js"></script>
+
+    <!--Importing single entry point-->
+    <script src="js/main.js"></script>
+</body>
+</html>
