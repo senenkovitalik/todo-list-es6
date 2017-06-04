@@ -1,25 +1,25 @@
-var AppScope = window.AppScope || {};
-
 AppScope.TaskLocalStorage = (function () {
     "use strict";
-    var TASKS_KEY = AppScope.localStorageConstants.TASK_LIST;
-    var FILTER = AppScope.localStorageConstants.FILTER;
-    var Task = AppScope.Task;
-    var TaskLibrary = AppScope.TaskLibrary;
+    const TASKS_KEY = AppScope.localStorageConstants.TASK_LIST;
+    const FILTER = AppScope.localStorageConstants.FILTER;
+    const Task = AppScope.Task;
+    const TaskLibrary = AppScope.TaskLibrary;
 
     // get all tasks
     function getAll() {
         try {
-            var taskListStringified = localStorage.getItem(TASKS_KEY).trim();
-            var taskList = JSON.parse(taskListStringified);
+            const taskListStringified = localStorage.getItem(TASKS_KEY).trim();
+            const taskList = JSON.parse(taskListStringified);
 
-            var list = [];
+            let taskArray = Array.isArray(taskList) ? taskList : [taskList];
+            let list = [];
 
-            taskList = Array.isArray(taskList) ? taskList : [taskList];
-
-            $.each(taskList, function (ignore, task) {
-                list.push(new Task().fromJSON(task));
+            $.each(taskArray, function (ignore, task) {
+                let t = new Task();
+                t.fromJSON(task);
+                list.push(t);
             });
+            console.log(list);
             TaskLibrary.setTasksCount(list.length);
 
             return list;
@@ -30,8 +30,8 @@ AppScope.TaskLocalStorage = (function () {
 
     // save all tasks
     function saveAll(taskList) {
-        var arr = [];
-        $.each(taskList, function (i, task) {
+        let arr = [];
+        $.each(taskList, (i, task) => {
             arr.push(task.toJSON());
         });
         localStorage.setItem(TASKS_KEY, JSON.stringify(arr));
@@ -40,15 +40,15 @@ AppScope.TaskLocalStorage = (function () {
 
     // save task
     function saveTask(task) {
-        var taskList = getAll();
+        let taskList = getAll();
         taskList.push(task);
         saveAll(taskList);
     }
 
     // remove task
     function removeTask(taskId) {
-        var taskList = getAll();
-        var index = findTask(taskId);
+        let taskList = getAll();
+        const index = findTask(taskId);
         if (index !== null) {
             taskList.splice(index, 1);
             saveAll(taskList);
@@ -62,9 +62,9 @@ AppScope.TaskLocalStorage = (function () {
 
     // change task attr
     function changeTaskAttr(taskId, attr, value) {
-        var index = findTask(taskId);
-        var taskList = getAll();
-        var task = taskList[index];
+        const index = findTask(taskId);
+        let taskList = getAll();
+        let task = taskList[index];
         switch (attr) {
             case "value":
                 task.value = value;
@@ -83,9 +83,9 @@ AppScope.TaskLocalStorage = (function () {
 
     // return task index
     function findTask(taskId) {
-        var taskList = getAll();
-        var index = null;
-        $.each(taskList, function (i, task) {
+        let taskList = getAll();
+        let index = null;
+        $.each(taskList, (i, task) => {
             if (parseInt(taskId) === task.id) {
                 index = i;
                 return false;

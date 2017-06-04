@@ -1,6 +1,4 @@
-var AppScope = window.AppScope || {};
-
-AppScope.LocationService = (function () {
+AppScope.LocationService = (() => {
     "use strict";
     // set URL hash value
     function setHash(value) {
@@ -22,4 +20,4 @@ AppScope.LocationService = (function () {
         getHash: getHash,
         getFilterValue: getFilterValue
     };
-}());
+})();

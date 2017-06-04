@@ -1,9 +1,7 @@
-var AppScope = window.AppScope || {};
-
-AppScope.TaskLibrary = (function () {
+AppScope.TaskLibrary = (() => {
     "use strict";
-    var selectedTasks = [];
-    var taskCount = 0;  // task amount in LS
+    let selectedTasks = [];
+    let taskCount = 0;  // task amount in LS
 
     // add task container(HTML element li) that user select to arr
     function addSelected(task) {
@@ -14,7 +12,7 @@ AppScope.TaskLibrary = (function () {
 
     // remove task container(HTML element li) that user deselect from arr
     function removeSelected(task) {
-        var index = $.inArray(task, selectedTasks);
+        const index = $.inArray(task, selectedTasks);
         if (index) {
             selectedTasks.splice(index, 1);
         }
@@ -55,4 +53,4 @@ AppScope.TaskLibrary = (function () {
         setTasksCount: setTasksCount,
         isAllSelected: isAllSelected
     };
-}());
+})();

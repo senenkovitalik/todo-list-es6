@@ -1,5 +1,3 @@
-var AppScope = window.AppScope || {};
-
 AppScope.config = {
     storage: "localStorage"
 };

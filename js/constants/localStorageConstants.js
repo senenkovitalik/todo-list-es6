@@ -1,4 +1,4 @@
-var AppScope = window.AppScope || {};
+const AppScope = window.AppScope || {};
 
 AppScope.localStorageConstants = {
     TASK_LIST: "TASK_LIST",
