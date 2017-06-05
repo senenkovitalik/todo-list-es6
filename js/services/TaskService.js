@@ -1,94 +1,99 @@
 AppScope.TaskService = (() => {
     "use strict";
-    let storage;
-    let selectMode = false;
-
     const Task = AppScope.Task;
     const TaskStatusEnum = AppScope.TaskStatusEnum;
     const TaskLibrary = AppScope.TaskLibrary;
     const TaskLocalStorage = AppScope.TaskLocalStorage;
     const LocationService = AppScope.LocationService;
 
+    let storage;
+    let selectMode = false;
+
     // set storage object
     function initialize() {
-        if (AppScope.config.storage === "serverApi") {
-            storage = AppScope.ServerApi;
-        } else {
-            storage = TaskLocalStorage;
-        }
+        storage = (AppScope.config.storage === "serverApi")
+            ? AppScope.ServerApi
+            : TaskLocalStorage;
     }
 
     // create task container (HTML element)
-    function createTaskContainer(otask) {
+    function createTaskContainer(oTask) {
+        if (!(oTask instanceof Task)) {
+            throw new Error("Arguments is not of type 'Task'");
+        }
         let checked = "";
         let selected = "";
-        if (otask.status.label === "Completed") {
+        if (oTask.status.label === "Completed") {
             checked = "checked";
         }
-        if (otask.isChecked === true) {
-            selected = " selected_item";
+        if (oTask.isChecked === true) {
+            selected = "selected_item";
         }
-        return "<li data-task-id='" + otask.id + "' data-task-status='" + otask.status.label + "'><div class='well well-sm" + selected + "'><div class='checkbox no-top-bottom-margin'><label><input type='checkbox' " + checked + ">" + otask.value + "</label></div></div></li>";
+        return `<li data-task-id='${oTask.id}' data-task-status='${oTask.status.label}'><div class='well well-sm ${selected}'><div class='checkbox no-top-bottom-margin'><label><input type='checkbox' ${checked}>${oTask.value}</label></div></div></li>`;
     }
 
     // produce content for task list
     function getTaskListContent() {
-        let content = "";
-        let tasks = storage.getAll();
-        console.log(tasks);
-        $.each(tasks, (ignore, taskObj) => {
-            content += createTaskContainer(taskObj);
+        let sContent = "";
+        let arrTasks = storage.getAll();
+        $.each(arrTasks, (ignore, oTask) => {
+            sContent += createTaskContainer(oTask);
         });
 
-        return content;
+        return sContent;
     }
 
     // add task container to list
-    function addTaskToList(taskDescription) {
+    function addTaskToList(sTaskName) {
+        if (typeof sTaskName !== "string" || sTaskName.length === 0) {
+            throw new Error("Argument is not string or length = 0");
+        }
         const taskId = getUniqueNumber();
         const task = new Task(
             taskId,
-            taskDescription,
-            TaskStatusEnum.ACTIVE_TASK,
+            sTaskName,
+            new TaskStatusEnum().getByCode("ACTIVE_TASK"),
             false
         );
 
-        storage.saveTask(task); // ???
+        storage.saveTask(task);
 
         return createTaskContainer(task);
     }
 
     // show/hide buttons for tasks completing/decompleting tasks
     function showCompleteButton() {
+        const filterValue =LocationService.getFilterValue();
         let btnComplete = $("#btn-complete");
-        if (LocationService.getFilterValue() !== "completed" && selectMode) {
-            btnComplete.removeClass("hide");
-        } else {
-            btnComplete.addClass("hide");
-        }
+        let btnUncomplete = $("#btn-uncomplete");
 
-        let btnDecomplete = $("#btn-uncomplete");
-        if (LocationService.getFilterValue() === "completed" && selectMode) {
-            btnDecomplete.removeClass("hide");
-        } else {
-            btnDecomplete.addClass("hide");
-        }
+        (filterValue !== "completed" && selectMode)
+            ? btnComplete.removeClass("hide")
+            : btnComplete.addClass("hide");
+
+        (filterValue === "completed" && selectMode)
+            ? btnUncomplete.removeClass("hide")
+            : btnUncomplete.addClass("hide");
     }
 
     // select/deselect tasks (need for multiselection)
-    function selectTask(taskContainer) {
-        let taskDiv = taskContainer.find(".well");
+    function selectTask(liTaskContainer) {
+        if (liTaskContainer.prop("tagName") !== "LI") {
+            throw new Error("Argument is not HTML li");
+        }
+
+        let taskDiv = liTaskContainer.find(".well");
+
         if (!taskDiv.hasClass("selected_item")) {
-            TaskLibrary.addSelected(taskContainer);
-            storage.changeTaskAttr(taskContainer.attr("data-task-id"), "isChecked", true);
+            TaskLibrary.addSelected(liTaskContainer);
             selectMode = true;
         } else {
-            TaskLibrary.removeSelected(taskContainer);
-            storage.changeTaskAttr(taskContainer.attr("data-task-id"), "isChecked", false);
+            TaskLibrary.removeSelected(liTaskContainer);
             if (!TaskLibrary.getSelectedCount()) {
                 selectMode = false;
             }
         }
+
         taskDiv.toggleClass("selected_item");
         showCompleteButton();
     }
@@ -121,54 +126,60 @@ AppScope.TaskService = (() => {
 
     // change task status
     function changeTaskStatus(taskContainer) {
-        const status = taskContainer.attr("data-task-status");
-        let newStatus;
-
-        if (status === "Active") {
-            newStatus = TaskStatusEnum.COMPLETED_TASK;
-        } else {
-            newStatus = TaskStatusEnum.ACTIVE_TASK;
+        if (taskContainer.prop("tagName") !== "LI") {
+            throw new Error("Argument is not HTML li");
         }
+
+        const status = taskContainer.attr("data-task-status");
+        let newStatus = (status === "Active")
+            ? new TaskStatusEnum().getByCode("COMPLETED_TASK")
+            : new TaskStatusEnum().getByCode("ACTIVE_TASK");
+
         storage.changeTaskAttr(
-            taskContainer.attr("data-task-id"),
+            parseInt(taskContainer.attr("data-task-id")),
             "status",
-            TaskStatusEnum.COMPLETED_TASK
+            newStatus
         );
         taskContainer.attr("data-task-status", newStatus.label);
     }
 
     // change tasks status to competed
     function completeTasks() {
+        const taskStatus = new TaskStatusEnum().getByCode("COMPLETED_TASK");
         $.each(TaskLibrary.getSelected(), (ignore, taskContainer) => {
+            let tc = $(taskContainer);
             storage.changeTaskAttr(
-                $(taskContainer).attr("data-task-id"),
+                parseInt(tc.attr("data-task-id")),
                 "status",
-                TaskStatusEnum.COMPLETED_TASK
+                taskStatus
             );
-            $(taskContainer).attr("data-task-status", TaskStatusEnum.COMPLETED_TASK.label);
-            $(taskContainer).find(".well").removeClass("selected_item");
-            $(taskContainer).find("input").prop("checked", true);
+            tc.attr("data-task-status", taskStatus.label);
+            tc.find(".well").removeClass("selected_item");
+            tc.find("input").prop("checked", true);
         });
     }
 
     // change tasks status to active
     function uncompleteTasks() {
+        const taskStatus = new TaskStatusEnum().getByCode("ACTIVE_TASK");
         $.each(TaskLibrary.getSelected(), (ignore, taskContainer) => {
+            let tc = $(taskContainer);
             storage.changeTaskAttr(
-                $(taskContainer).attr("data-task-id"),
+                parseInt(tc.attr("data-task-id")),
                 "status",
-                TaskStatusEnum.ACTIVE_TASK
+                taskStatus
             );
-            $(taskContainer).attr("data-task-status", TaskStatusEnum.ACTIVE_TASK.label);
-            $(taskContainer).find("input").prop("checked", false);
+            tc.attr("data-task-status", taskStatus.label);
+            tc.find("input").prop("checked", false);
         });
     }
 
     // Remove selected tasks
     function removeTasks() {
         $.each(TaskLibrary.getSelected(), (ignore, taskContainer) => {
-            storage.removeTask($(taskContainer).attr("data-task-id"));
-            $(taskContainer).remove();
+            let tc = $(taskContainer);
+            storage.removeTask(tc.attr("data-task-id"));
+            tc.remove();
         });
         TaskLibrary.clearSelected();
         selectMode = false;
@@ -176,16 +187,19 @@ AppScope.TaskService = (() => {
     }
 
     // Execute appropriate functions for filtering and selecting
-    function groupActions(action) {
-        switch (action) {
+    function groupActions(sAction) {
+        if (typeof sAction !== "string" || sAction.length === 0) {
+            throw new Error("Argument is not string or length = 0");
+        }
+        switch (sAction) {
         case "show-active":
             LocationService.setHash("filter=active");
-            useFilter("active");
+            useFilter();
             storage.saveFilter("active");
             break;
         case "show-completed":
             LocationService.setHash("filter=completed");
-            useFilter("completed");
+            useFilter();
             storage.saveFilter("completed");
             break;
         case "select-all":
@@ -201,14 +215,15 @@ AppScope.TaskService = (() => {
     }
 
     // filter user task list
-    function useFilter(filter) {
-        filter = LocationService.getFilterValue();
+    function useFilter() {
+        const sFilter = LocationService.getFilterValue();
         let taskList = $("#list").find("li");
-        switch (filter) {
+
+        switch (sFilter) {
         case "active":
         case "completed":
             $.each(taskList, (ignore, v) => {
-                if ($(v).attr("data-task-status").toLowerCase() === filter) {
+                if ($(v).attr("data-task-status").toLowerCase() === sFilter) {
                     $(v).show();
                 } else {
                     $(v).hide();
@@ -216,6 +231,7 @@ AppScope.TaskService = (() => {
             });
             break;
         }
+
         deselectAllTasks();
     }
 
@@ -230,7 +246,7 @@ AppScope.TaskService = (() => {
     // produce content for popover window ('More'/'Actions' menu)
     // decide what items will be shown
     function getPopoverContent() {
-        let showObj = {
+        const showObj = {
             showActive: "",
             showCompleted: "",
             selectAll: "",
@@ -238,7 +254,7 @@ AppScope.TaskService = (() => {
             removeSelected: ""
         };
 
-        let hide = "class='hide'";
+        const hide = "class='hide'";
 
         switch (LocationService.getFilterValue()) {
         case "active":
@@ -249,9 +265,7 @@ AppScope.TaskService = (() => {
             break;
         }
 
-        let len = $(".list-unstyled")
-            .find("li")
-            .filter(() => {
+        let len = $(".list-unstyled").find("li").filter(() => {
                 return $(this).attr("style") !== "display: none;";
             }).length;
 
@@ -267,7 +281,7 @@ AppScope.TaskService = (() => {
             showObj.removeSelected = hide;
         }
 
-        let content = $("<ul class='list-unstyled' id='group-action-panel'><li " + showObj.showActive + "><a href='#' data-action='show-active'>Show active</a></li><li " + showObj.showCompleted + "><a href='#' data-action='show-completed'>Show completed</a></li><li " + showObj.selectAll + "><a href='#' data-action='select-all'>Select all</a></li><li " + showObj.deselectAll + "><a href='#' data-action='deselect-all'>Deselect all</a></li><li " + showObj.removeSelected + "><a href='#' data-action='remove-selected'>Remove task(s)</a></li></ul>");
+        const content = $("<ul class='list-unstyled' id='group-action-panel'><li " + showObj.showActive + "><a href='#' data-action='show-active'>Show active</a></li><li " + showObj.showCompleted + "><a href='#' data-action='show-completed'>Show completed</a></li><li " + showObj.selectAll + "><a href='#' data-action='select-all'>Select all</a></li><li " + showObj.deselectAll + "><a href='#' data-action='deselect-all'>Deselect all</a></li><li " + showObj.removeSelected + "><a href='#' data-action='remove-selected'>Remove task(s)</a></li></ul>");
 
         content.on("click", "li", (e) => {
             e.preventDefault();

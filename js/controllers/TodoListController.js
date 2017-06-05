@@ -20,29 +20,37 @@ AppScope.TodoListController = (() => {
     }
 
     function getAllNodes() {
-        const modalWindow = $("#modal-add-task");
         const modalWindowInput = $("#task-description");
-        const modalWindowInputContainer = modalWindowInput.parent();
-        const listContainer = $("#list");
-        const list = $(".list-unstyled");
-        const completeButton = $("#btn-complete");
-        const uncompleteButton = $("#btn-uncomplete");
-        const popover = $("[data-toggle='popover']");
         oNodes = {
-            modalWindow: modalWindow,
+            modalWindow: $("#modal-add-task"),
             modalWindowInput: modalWindowInput,
-            modalWindowInputContainer: modalWindowInputContainer,
-            listContainer: listContainer,
-            list: list,
-            completeButton: completeButton,
-            uncompleteButton: uncompleteButton,
-            popover: popover
+            modalWindowInputContainer: modalWindowInput.parent(),
+            listContainer: $("#list"),
+            list: $(".list-unstyled"),
+            completeButton: $("#btn-complete"),
+            uncompleteButton: $("#btn-uncomplete"),
+            popover: $("[data-toggle='popover']")
         };
     }
 
     function renderStaticContent() {
         let content = $("<!-- Navigation bar --><div class=\"navbar navbar-fixed-top\"><div class=\"container-fluid\"><div class=\"navbar-header\"><span class=\"navbar-brand\">ToDo List</span></div><ul class=\"nav navbar-nav navbar-right\"><li><a href=\"#\" class=\"navbar-action-btn hide\" id=\"btn-uncomplete\"><span class=\"glyphicon glyphicon-unchecked\"></span></a></li><li><a href=\"#\" class=\"navbar-action-btn hide\" id=\"btn-complete\"><span class=\"glyphicon glyphicon-check\"></span></a></li><li><a href=\"#\" class=\"navbar-action-btn\" id=\"btn-action\" data-toggle=\"popover\"><span class=\"glyphicon glyphicon-option-vertical\"></span></a></li></ul></div></div><div id=\"main-content\" class=\"container-fluid\"><!-- List --><div class=\"row\" id=\"list\"><div class=\"col-xs-12 col-md-8 col-md-offset-2\"><ul class=\"list-unstyled\"></ul></div></div><!-- Trigger the modal with a button --><button id=\"btn-add-task\" type=\"button\" class=\"btn btn-primary btn-lg\" data-toggle=\"modal\" data-target=\"#modal-add-task\">+</button><!-- Modal --><div id=\"modal-add-task\" class=\"modal fade\" role=\"dialog\"><div class=\"modal-dialog\"><!-- Modal content --><div class=\"modal-content\"><div class=\"modal-header\"><button type=\"button\" class=\"close\"><span class=\"glyphicon glyphicon-ok\"></span></button><h4 class=\"modal-title\">New Task</h4></div><div class=\"modal-body\"><div class=\"form-group\"><label for=\"task-description\">What need to do?</label><input type=\"text\" class=\"form-control\" id=\"task-description\" placeholder=\"Add task description\"></div></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Cancel</button></div></div></div></div></div>");
         $("body").prepend(content);
+    }
+
+    function addNewTask() {
+        const taskDescription = oNodes.modalWindowInput.val();
+        if (taskDescription.length !== 0) {
+            let content = TaskService.addTaskToList(taskDescription);
+            oNodes.list.append($(content));
+            oNodes.modalWindow.modal("hide");
+            TaskService.useFilter();
+        } else {
+            // make input field red to show error input
+            let formGroup = oNodes.modalWindow.find(".form-group");
+            formGroup.addClass("has-error has-feedback");
+            formGroup.append($("<span class=\"glyphicon glyphicon-remove form-control-feedback\"></span>"));
+        }
     }
 
     function initStaticContentListeners() {
@@ -76,22 +84,6 @@ AppScope.TodoListController = (() => {
                 addNewTask();
             }
         });
-
-        function addNewTask() {
-            const taskDescription = oNodes.modalWindowInput.val();
-            if (taskDescription) {
-                console.log(taskDescription);
-                let content = TaskService.addTaskToList(taskDescription);
-                oNodes.list.append($(content));
-                oNodes.modalWindow.modal("hide");
-                TaskService.useFilter();
-            } else {
-                // make input field red to show error input
-                let formGroup = oNodes.modalWindow.find(".form-group");
-                formGroup.addClass("has-error has-feedback");
-                formGroup.append($("<span class=\"glyphicon glyphicon-remove form-control-feedback\"></span>"));
-            }
-        }
 
         // select one or multiple elements
         oNodes.listContainer.on("click", "li", (e) => {

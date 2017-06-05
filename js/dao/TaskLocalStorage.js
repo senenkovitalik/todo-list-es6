@@ -1,4 +1,4 @@
-AppScope.TaskLocalStorage = (function () {
+AppScope.TaskLocalStorage = (() => {
     "use strict";
     const TASKS_KEY = AppScope.localStorageConstants.TASK_LIST;
     const FILTER = AppScope.localStorageConstants.FILTER;
@@ -15,41 +15,45 @@ AppScope.TaskLocalStorage = (function () {
             let list = [];
 
             $.each(taskArray, function (ignore, task) {
-                let t = new Task();
-                t.fromJSON(task);
-                list.push(t);
+                list.push(new Task().fromJSON(task));
             });
-            console.log(list);
             TaskLibrary.setTasksCount(list.length);
 
             return list;
         } catch (e) {
+            console.log(e.message);
             return [];
         }
     }
 
     // save all tasks
-    function saveAll(taskList) {
+    function saveAll(arrTaskList) {
         let arr = [];
-        $.each(taskList, (i, task) => {
-            arr.push(task.toJSON());
+        $.each(arrTaskList, (i, oTask) => {
+            arr.push(oTask.toJSON());
         });
         localStorage.setItem(TASKS_KEY, JSON.stringify(arr));
         TaskLibrary.setTasksCount(arr.length);
     }
 
     // save task
-    function saveTask(task) {
+    function saveTask(oTask) {
+        if (!(oTask instanceof Task)) {
+            throw new Error("Argument is not instance of 'Task'");
+        }
         let taskList = getAll();
-        taskList.push(task);
+        taskList.push(oTask);
         saveAll(taskList);
     }
 
     // remove task
-    function removeTask(taskId) {
+    function removeTask(nTaskId) {
+        if (typeof nTaskId !== "number") {
+            throw new Error("Argument is not 'Number'");
+        }
         let taskList = getAll();
-        const index = findTask(taskId);
-        if (index !== null) {
+        const index = findTask(nTaskId);
+        if (index) {
             taskList.splice(index, 1);
             saveAll(taskList);
         }
@@ -61,42 +65,61 @@ AppScope.TaskLocalStorage = (function () {
     }
 
     // change task attr
-    function changeTaskAttr(taskId, attr, value) {
-        const index = findTask(taskId);
-        let taskList = getAll();
-        let task = taskList[index];
-        switch (attr) {
+    function changeTaskAttr(nTaskId, sAttr, mixValue) {
+        if (typeof nTaskId !== "number") {
+            throw new Error(`Argument ${nTaskId} is not 'Number'`);
+        }
+
+        if (typeof sAttr !== "string" || sAttr.length === 0) {
+            throw new Error(`Argument ${sAttr} is not 'String' or length = 0`);
+        }
+
+        if (typeof mixValue === "string" && mixValue.length !== 0) {
+        } else if (mixValue instanceof AppScope.TaskStatus) {
+        } else if (typeof mixValue === "boolean") {
+        } else {
+            throw new Error(`Argument ${mixValue} is not of allowed types (String, TaskStatus, Boolean)`);
+        }
+
+        const nIndex = findTask(nTaskId);
+        let arrTaskList = getAll();
+        let oTask = arrTaskList[nIndex];
+
+        switch (sAttr) {
             case "value":
-                task.value = value;
+                oTask.value = mixValue;
                 break;
             case "status":
-                task.status = value;
+                oTask.status = mixValue;
                 break;
             case "isChecked":
-                task.isChecked = value;
+                oTask.isChecked = mixValue;
                 break;
             default:
-                console.log("Attr" + attr + " not found!!!");
+                console.log("Attr" + sAttr + " not found!!!");
         }
-        saveAll(taskList);
+        saveAll(arrTaskList);
     }
 
     // return task index
-    function findTask(taskId) {
-        let taskList = getAll();
-        let index = null;
-        $.each(taskList, (i, task) => {
-            if (parseInt(taskId) === task.id) {
-                index = i;
+    function findTask(nTaskId) {
+        if (typeof nTaskId !== "number") {
+            throw new Error(`Argument ${nTaskId} is not 'Number'`);
+        }
+        let arrTaskList = getAll();
+        let nIndex = -1;
+        $.each(arrTaskList, (i, oTask) => {
+            if (nTaskId === oTask.id) {
+                nIndex = i;
                 return false;
             }
         });
-        return index;
+        return nIndex;
     }
 
     // get filter value from LS
     function getFilter() {
-        return localStorage.getItem(FILTER);
+        return localStorage.getItem(FILTER) || "active";
     }
 
     // save filter value to LS
@@ -114,4 +137,4 @@ AppScope.TaskLocalStorage = (function () {
         getFilter: getFilter,
         saveFilter: saveFilter
     };
-}());
+})();

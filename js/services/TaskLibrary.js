@@ -1,47 +1,53 @@
 AppScope.TaskLibrary = (() => {
     "use strict";
-    let selectedTasks = [];
-    let taskCount = 0;  // task amount in LS
+    let arrSelectedTasks = [];
+    let nTaskCount = 0;  // task amount in LS
 
     // add task container(HTML element li) that user select to arr
-    function addSelected(task) {
-        if ($.inArray(task, selectedTasks)) {
-            selectedTasks.push(task);
+    function addSelected(liTaskContainer) {
+        if (liTaskContainer.prop("tagName") !== "LI") {
+            throw new Error("Argument is not a HTML li");
+        }
+        if ($.inArray(liTaskContainer, arrSelectedTasks)) {
+            arrSelectedTasks.push(liTaskContainer);
         }
     }
 
     // remove task container(HTML element li) that user deselect from arr
-    function removeSelected(task) {
-        const index = $.inArray(task, selectedTasks);
+    function removeSelected(liTaskContainer) {
+        if (liTaskContainer.prop("tagName") !== "LI") {
+            throw new Error("Argument is not a HTML li");
+        }
+        const index = $.inArray(liTaskContainer, arrSelectedTasks);
         if (index) {
-            selectedTasks.splice(index, 1);
+            arrSelectedTasks.splice(index, 1);
         }
     }
 
     // clear arr of selected tasks
     function clearSelected() {
-        selectedTasks = [];
+        arrSelectedTasks = [];
     }
 
     // get arr of selected tasks
     function getSelected() {
-        return selectedTasks;
+        return arrSelectedTasks;
     }
 
     // get task number that user select
     function getSelectedCount() {
-        return selectedTasks.length;
+        return arrSelectedTasks.length;
     }
 
     // set number of tasks loaded from LS
     // may change after add/del tasks
     function setTasksCount(count) {
-        taskCount = count;
+        nTaskCount = count;
     }
 
     // check if all tasks that was load was select
     function isAllSelected() {
-        return (getSelectedCount() === taskCount);
+        return (getSelectedCount() === nTaskCount);
     }
 
     return {
