@@ -8,12 +8,18 @@ AppScope.TaskService = (() => {
 
     let storage;
     let selectMode = false;
+    let htmlCache;
 
     // set storage object
     function initialize() {
         storage = (AppScope.config.storage === "serverApi")
             ? AppScope.ServerApi
             : TaskLocalStorage;
+    }
+
+    // get DOM elements from Controller
+    function setHTMLCache(cache) {
+        htmlCache = cache;
     }
 
     // create task container (HTML element)
@@ -64,8 +70,8 @@ AppScope.TaskService = (() => {
     // show/hide buttons for tasks completing/decompleting tasks
     function showCompleteButton() {
         const filterValue =LocationService.getFilterValue();
-        let btnComplete = $("#btn-complete");
-        let btnUncomplete = $("#btn-uncomplete");
+        let btnComplete = htmlCache.completeButton;
+        let btnUncomplete = htmlCache.uncompleteButton;
 
         (filterValue !== "completed" && selectMode)
             ? btnComplete.removeClass("hide")
@@ -100,7 +106,7 @@ AppScope.TaskService = (() => {
 
     // select all tasks
     function selectAllTasks() {
-        let taskList = $("#list").find("li");
+        let taskList = htmlCache.listContainer.find("li");
         $.each(taskList, (ignore, task) => {
             if ($(task).attr("style") !== "display: none") {
                 TaskLibrary.addSelected(task);
@@ -114,7 +120,7 @@ AppScope.TaskService = (() => {
 
     // deselect all tasks
     function deselectAllTasks() {
-        let taskList = $("#list").find("li");
+        let taskList = htmlCache.listContainer.find("li");
         $.each(taskList, (ignore, task) => {
             let taskDiv = $(task).find(".well");
             taskDiv.removeClass("selected_item");
@@ -178,7 +184,7 @@ AppScope.TaskService = (() => {
     function removeTasks() {
         $.each(TaskLibrary.getSelected(), (ignore, taskContainer) => {
             let tc = $(taskContainer);
-            storage.removeTask(tc.attr("data-task-id"));
+            storage.removeTask(parseInt(tc.attr("data-task-id")));
             tc.remove();
         });
         TaskLibrary.clearSelected();
@@ -217,20 +223,15 @@ AppScope.TaskService = (() => {
     // filter user task list
     function useFilter() {
         const sFilter = LocationService.getFilterValue();
-        let taskList = $("#list").find("li");
+        let taskList = htmlCache.list.find("li");
 
-        switch (sFilter) {
-        case "active":
-        case "completed":
-            $.each(taskList, (ignore, v) => {
-                if ($(v).attr("data-task-status").toLowerCase() === sFilter) {
-                    $(v).show();
-                } else {
-                    $(v).hide();
-                }
-            });
-            break;
-        }
+        $.each(taskList, (ignore, v) => {
+            if ($(v).attr("data-task-status").toLowerCase() === sFilter) {
+                $(v).show();
+            } else {
+                $(v).hide();
+            }
+        });
 
         deselectAllTasks();
     }
@@ -265,7 +266,7 @@ AppScope.TaskService = (() => {
             break;
         }
 
-        let len = $(".list-unstyled").find("li").filter(() => {
+        let len = htmlCache.list.find("li").filter(() => {
                 return $(this).attr("style") !== "display: none;";
             }).length;
 
@@ -294,6 +295,7 @@ AppScope.TaskService = (() => {
 
     return {
         initialize: initialize,
+        setHTMLCache: setHTMLCache,
         addTaskToList: addTaskToList,
         getUniqueNumber: getUniqueNumber,
         getPopoverContent: getPopoverContent,

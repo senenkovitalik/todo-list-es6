@@ -2,7 +2,7 @@ AppScope.config = {
     storage: "localStorage"
 };
 
-// Initialize Service / Caches
+// Initialize Service
 AppScope.TaskService.initialize();
 
 // Initialize Page controller

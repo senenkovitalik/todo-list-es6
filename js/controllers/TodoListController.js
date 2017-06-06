@@ -1,8 +1,8 @@
 AppScope.TodoListController = (() => {
     "use strict";
-    const TaskService = AppScope.TaskService;
-    const LocationService = AppScope.LocationService;
     const TaskLocalStorage = AppScope.TaskLocalStorage;
+    const LocationService = AppScope.LocationService;
+    const TaskService = AppScope.TaskService;
 
     let isInitialized;
     let oNodes;
@@ -11,7 +11,7 @@ AppScope.TodoListController = (() => {
         if (!isInitialized) {
             isInitialized = true;
             renderStaticContent();
-            getAllNodes();
+            createHTMLCache();
             initStaticContentListeners();
             loadUserTaskList();
         } else {
@@ -19,7 +19,7 @@ AppScope.TodoListController = (() => {
         }
     }
 
-    function getAllNodes() {
+    function createHTMLCache() {
         const modalWindowInput = $("#task-description");
         oNodes = {
             modalWindow: $("#modal-add-task"),
@@ -31,6 +31,8 @@ AppScope.TodoListController = (() => {
             uncompleteButton: $("#btn-uncomplete"),
             popover: $("[data-toggle='popover']")
         };
+
+        TaskService.setHTMLCache(oNodes);
     }
 
     function renderStaticContent() {

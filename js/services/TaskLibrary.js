@@ -5,7 +5,7 @@ AppScope.TaskLibrary = (() => {
 
     // add task container(HTML element li) that user select to arr
     function addSelected(liTaskContainer) {
-        if (liTaskContainer.prop("tagName") !== "LI") {
+        if ($(liTaskContainer).prop("tagName") !== "LI") {
             throw new Error("Argument is not a HTML li");
         }
         if ($.inArray(liTaskContainer, arrSelectedTasks)) {
